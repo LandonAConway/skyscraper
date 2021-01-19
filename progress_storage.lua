@@ -14,6 +14,7 @@ local function count(t, ispairs)
   return count
 end
 
+--saves all skyscrapers
 local function save_skyscrapers()
   local skyscrapers = minetest.serialize(skyscraper.progress.skyscrapers)
   local segments = minetest.serialize(skyscraper.progress.segments)
@@ -22,6 +23,7 @@ local function save_skyscrapers()
   skyscraper.storage.set_string("segments", segments)
 end
 
+--loads all skyscrapers
 local function load_skyscrapers()
   skyscraper.progress.skyscrapers = minetest.deserialize(skyscraper.storage.get_string("skyscrapers")) or {}
   skyscraper.progress.segments = minetest.deserialize(skyscraper.storage.get_string("segments")) or {}
@@ -85,6 +87,7 @@ local function remove_non_existing()
   end
 end
 
+--save the skyscrapers every 50 seconds
 minetest.register_globalstep(function(dtime)
   timer = timer + dtime
   
@@ -93,16 +96,19 @@ minetest.register_globalstep(function(dtime)
   end
 end)
 
+--save skyscrapers on shutdown
 minetest.register_on_shutdown(function()
   save_skyscrapers()
 end)
 
+--load skyscrapers after mods are loaded, and continue their building processes if not completed
 minetest.register_on_mods_loaded(function()
   local error, message = pcall(function ()
     load_skyscrapers()
     remove_non_existing()
     
     --continue building unfinished skyscrapers
+    --even if a skyscraper if labeled as completed, this does not mean it's floors are completed
     for skyscraperkey, segmentcollection in pairs(skyscraper.progress.segments) do
       local skyscraperprog = skyscraper.progress.skyscrapers[skyscraperkey]
       for segmentindex, segmentprog in ipairs(segmentcollection) do

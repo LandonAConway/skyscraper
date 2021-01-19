@@ -7,6 +7,7 @@ function skyscraper.progress.get_info(sckyscraperpos, segementindex, floorindex)
   return skyscraperkey, skyscraperprog, segmentprog, floorprog
 end
 
+--counts keys or indexes in a table
 local function count(t, ispairs)
   local count = 0
   if ispairs then
@@ -21,6 +22,7 @@ local function count(t, ispairs)
   return count
 end
 
+--gets the current segment progress of the given skyscraper progress
 local function get_segment_prog(skyscraperprog)
   if skyscraperprog == nil then
     return nil
@@ -32,6 +34,7 @@ local function get_segment_prog(skyscraperprog)
   return segmentprog
 end
 
+--gets progress of the current floor of the given segment
 local function get_floor_prog(skyscraperprog, segmentprog)
   if skyscraperprog == nil then
     return nil
@@ -49,6 +52,7 @@ local function get_floor_prog(skyscraperprog, segmentprog)
   end
 end
 
+--builds the stage
 function skyscraper.progress.build_stage(pos, segmentindex, floorindex)
   local skyscraperkey = minetest.pos_to_string(pos)
   local skyscraperprog = skyscraper.progress.skyscrapers[skyscraperkey]
@@ -77,24 +81,29 @@ function skyscraper.progress.start_building_floor(pos, segmentindex, floorindex)
         local floordef = skyscraper.registered_floors[floorprog.name]
         local stagedef = skyscraper.registered_stages[floordef.stages[floorprog.current_stage]]
         
+        --if stagedef is nil then current_stage needs to change, or there are no stages left
         if stagedef == nil then
+          --if the current stage is greater than the maximum amount, then complete it.
           if floorprog.current_stage > count(floordef.stages) then
             if not floorprog.completed then
               floorprog.completed = true
             end
+          --otherwise, current_stage is probably at 0 and needs to move up 1 so stagedef will not be nil on the next global step
           else
             floorprog.current_stage = floorprog.current_stage + 1
           end
+        --if stagedef is not nil then we can use it
         else
+          --build the stage if it is time to do so
           if floorprog.current_stage_elapsed > stagedef.steps then
             floorprog.current_stage_elapsed = 0
             skyscraper.progress.build_stage(pos, segmentindex, floorindex)
+            --increment current_stage so the next global step will get the next stage definition
             floorprog.current_stage = floorprog.current_stage + 1
-          else
-            
           end
         end
         
+        --increment the current_stage_elapsed
         floorprog.current_stage_elapsed = floorprog.current_stage_elapsed + dtime
       end
     end)
@@ -105,6 +114,7 @@ function skyscraper.progress.start_building_floor(pos, segmentindex, floorindex)
   end)
 end
 
+--elapses all the types of progress for every one that is not nil
 local function elapse(dtime, skyscraperprog, segmentprog, floorprog)
   if skyscraperprog then
     skyscraperprog.elapsed = skyscraperprog.elapsed + dtime
@@ -117,6 +127,7 @@ local function elapse(dtime, skyscraperprog, segmentprog, floorprog)
   end
 end
 
+--builds the skyscraper
 function skyscraper.progress.start_building_skyscraper(pos)
   minetest.register_globalstep(function(dtime)
     local v, message =pcall(function()

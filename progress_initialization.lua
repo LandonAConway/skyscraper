@@ -3,6 +3,7 @@ skyscraper.progress.floors = {}
 skyscraper.progress.segments = {}
 skyscraper.progress.skyscrapers = {}
 
+--creates an instance of a floor
 function skyscraper.progress.create_floor(pos, skyscraperdef, segmentdef, segmentindex, floordef, floorindex)
   if type(segmentdef) == "string" then
     segmentdef = skyscraper.registered_segments[segmentdef]
@@ -12,6 +13,7 @@ function skyscraper.progress.create_floor(pos, skyscraperdef, segmentdef, segmen
     floordef = skyscraper.registered_floors[floordef]
   end
   
+  --calculates the y position of where the floor will be placed at
   local floor_y = (skyscraper.get_skyscraper_height(skyscraperdef, segmentindex, floorindex - 1) + 1) + pos.y
   
   local progress = {
@@ -29,12 +31,15 @@ function skyscraper.progress.create_floor(pos, skyscraperdef, segmentdef, segmen
   return progress
 end
 
+--creates an instance of a segment
 function skyscraper.progress.create_segment(pos, skyscraperdef, segmentdef, segmentindex)
   if type(segmentdef) == "string" then
     segmentdef = skyscraper.registered_segments[segmentdef]
   end
   
+  --calculates the height of the segment
   local segment_height = skyscraper.get_segment_height(segmentdef)
+  --calculates the y position of the segment for reference
   local segment_y = ((skyscraper.get_skyscraper_height(skyscraperdef, segmentindex) - segment_height) + 1) + pos.y
   
   local progress = {
@@ -48,6 +53,7 @@ function skyscraper.progress.create_segment(pos, skyscraperdef, segmentdef, segm
     floors = {}
   }
   
+  --generates all the floors of the segment
   for i=1, segmentdef.floors do
     local floor_progress = skyscraper.progress.create_floor(pos, skyscraperdef, segmentdef, segmentindex, segmentdef.floor, i)
     table.insert(progress.floors, floor_progress)
@@ -58,6 +64,7 @@ function skyscraper.progress.create_segment(pos, skyscraperdef, segmentdef, segm
   return progress
 end
 
+--create an instance of a skyscraper so it can be built
 function skyscraper.progress.create_skyscraper(pos, skyscraperdef)
   if type(skyscraperdef) == "string" then
     skyscraperdef = skyscraper.registered_skyscrapers[skyscraperdef]
@@ -77,6 +84,7 @@ function skyscraper.progress.create_skyscraper(pos, skyscraperdef)
   skyscraper.progress.segments[minetest.pos_to_string(pos)] = {}
   skyscraper.progress.floors[minetest.pos_to_string(pos)] = {}
   
+  --generates all the segments of the skyscraper
   for i,v in ipairs(skyscraperdef.segments) do
     skyscraper.progress.create_segment(pos, skyscraperdef, v, i)
   end
