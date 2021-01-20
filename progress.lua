@@ -62,8 +62,13 @@ function skyscraper.progress.build_stage(pos, segmentindex, floorindex)
   local floordef = skyscraper.registered_floors[floorprog.name]
   local stagedef = skyscraper.registered_stages[floordef.stages[floorprog.current_stage]]
   
+  --get position and rotation data.
+  local position = floorprog.actual_position
+  local rotation = tostring(skyscraperprog.actual_position)
+  
   if stagedef ~= nil then
-    minetest.place_schematic(floorprog.position, stagedef.schematic, "0", nil, true)
+    --place the schematic using the data provided.
+    minetest.place_schematic(position, stagedef.schematic, rotation, nil, true)
   end
 end
 
