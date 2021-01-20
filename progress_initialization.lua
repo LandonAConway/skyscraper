@@ -65,14 +65,23 @@ function skyscraper.progress.create_segment(pos, skyscraperdef, segmentdef, segm
 end
 
 --create an instance of a skyscraper so it can be built
-function skyscraper.progress.create_skyscraper(pos, skyscraperdef)
+function skyscraper.progress.create_skyscraper(pos, skyscraperdef, angle)
   if type(skyscraperdef) == "string" then
     skyscraperdef = skyscraper.registered_skyscrapers[skyscraperdef]
+  end
+  
+  --started implementing an angle feature but haven't started using it yet.
+  --offsets will be calculated with angles.
+  if type(angle) ~= "number" then
+    angle = 0
+  elseif angle ~= 0 and angle ~= 90 and angle ~= 180 and angle ~= 270 then
+    error("'angle' can only be one of the following: 0, 90, 180, 270")
   end
   
   local progress = {
     name = skyscraperdef.name,
     position = pos,
+    angle = angle,
     current_segment = 0,
     height = skyscraper.get_skyscraper_height(skyscraperdef),
     elapsed = 0,
