@@ -129,6 +129,10 @@ function skyscraper.progress.create_skyscraper(pos, skyscraperdef, angle, player
     skyscraperdef = skyscraper.registered_skyscrapers[skyscraperdef]
   end
   
+  if not skyscraperdef then
+    error("skyscraper does not exist.")
+  end
+  
   --started implementing an angle feature but haven't started using it yet.
   --offsets will be calculated with angles.
   if type(angle) ~= "number" then
@@ -182,4 +186,14 @@ end
 
 function skyscraper.initialize_skyscraper(pos, skyscraperdef, angle, player)
   return skyscraper.progress.create_skyscraper(pos, skyscraperdef, angle, player)
+end
+
+function skyscraper.progress.delete_skyscraper(pos)
+  if type(pos) == "table" then
+    pos = minetest.pos_to_string(pos)
+  end
+  
+  skyscraper.progress.skyscrapers[pos] = nil
+  skyscraper.progress.segments[pos] = nil
+  skyscraper.progress.floors[pos] = nil
 end
