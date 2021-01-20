@@ -110,7 +110,7 @@ minetest.register_craftitem("skyscraper:placer", {
   on_place = function(itemstack, placer, pointed_thing)
     if pointed_thing.type == "node" then
       local pos = minetest.get_pointed_thing_position(pointed_thing, pointed_thing.above)
-      skyscraper.progress.create_skyscraper(pos, "skyscraper:sample")
+      local prog = skyscraper.progress.create_skyscraper(pos, "skyscraper:sample")
       skyscraper.progress.start_building_skyscraper(pos)
       minetest.chat_send_all("Skyscraper placed at: "..minetest.pos_to_string(pos))
     end
