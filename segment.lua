@@ -12,6 +12,7 @@ function skyscraper.register_segment(name, def)
   
   def.name = name
   def.offset = def.offset or {x=0,y=0,z=0}
+  def.container = def.container or {x=0,y=0,z=0}
   
   skyscraper.registered_segments[name] = def
 end

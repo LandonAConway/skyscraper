@@ -70,6 +70,7 @@ function skyscraper.progress.create_floor(pos, skyscraperdef, segmentdef, segmen
     current_stage = 0,
     elapsed = 0,
     current_stage_elapsed = 0,
+    built = false,
     completed = false
   }
   
@@ -105,6 +106,8 @@ function skyscraper.progress.create_segment(pos, skyscraperdef, segmentdef, segm
     current_floor = 0,
     height = segment_height,
     elapsed = 0,
+    started = false,
+    built = false,
     completed = false,
     floors = {}
   }
@@ -121,7 +124,7 @@ function skyscraper.progress.create_segment(pos, skyscraperdef, segmentdef, segm
 end
 
 --create an instance of a skyscraper so it can be built
-function skyscraper.progress.create_skyscraper(pos, skyscraperdef, angle)
+function skyscraper.progress.create_skyscraper(pos, skyscraperdef, angle, player)
   if type(skyscraperdef) == "string" then
     skyscraperdef = skyscraper.registered_skyscrapers[skyscraperdef]
   end
@@ -157,6 +160,7 @@ function skyscraper.progress.create_skyscraper(pos, skyscraperdef, angle)
     height = skyscraper.get_skyscraper_height(skyscraperdef),
     elapsed = 0,
     paused = false,
+    built = false,
     completed = false
   }
   
@@ -169,5 +173,13 @@ function skyscraper.progress.create_skyscraper(pos, skyscraperdef, angle)
     skyscraper.progress.create_segment(pos, skyscraperdef, v, i, angle)
   end
   
+  if type(skyscraperdef.initialized) == "function" then
+    skyscraperdef.initialized(progress, player)
+  end
+  
   return progress
+end
+
+function skyscraper.initialize_skyscraper(pos, skyscraperdef, angle, player)
+  return skyscraper.progress.create_skyscraper(pos, skyscraperdef, angle, player)
 end

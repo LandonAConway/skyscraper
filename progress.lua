@@ -72,6 +72,58 @@ function skyscraper.progress.build_stage(pos, segmentindex, floorindex)
   end
 end
 
+local function segment_iscompleted(segmentprog)
+  local result = true
+  for i, v in ipairs(segmentprog.floors) do
+    if not v.completed then
+      result = false
+    end
+  end
+  return result
+end
+
+local function skyscraper_iscompleted(skyscraperprog)
+  local result = true
+  local skyscraperkey = minetest.pos_to_string(skyscraperprog.position)
+  local segmentcollection = skyscraper.progress.segments[skyscraperkey]
+  for i, v in ipairs(segmentcollection) do
+    if not segment_iscompleted(v) then
+      result = false
+    end
+  end
+  return result
+end
+
+local function update_completion_status(skyscraperprog, segmentprog, docallbacks)
+  if skyscraperprog ~= nil then
+    if docallbacks then
+      local changed = (skyscraperprog.completed ~= skyscraper_iscompleted(skyscraperprog))
+      if changed then
+        local skyscraperdef = skyscraper.registered_skyscrapers[skyscraperprog.name]
+        if type(skyscraperdef.completed) == "function" then
+          skyscraperdef.completed(skyscraperprog)
+        end
+      end
+    end
+    
+    skyscraperprog.completed = skyscraper_iscompleted(skyscraperprog)
+  end
+  
+  if segmentprog ~= nil then
+    if docallbacks then
+      local changed = (segmentprog.completed ~= segment_iscompleted(skyscraperprog))
+      if changed then
+        local segmentdef = skyscraper.registered_segments[segmentprog.name]
+        if type(segmentdef.completed) == "function" then
+          segmentdef.completed(skyscraperprog, segmentprog)
+        end
+      end
+    end
+    
+    segmentprog.completed = segment_iscompleted(segmentprog)
+  end
+end
+
 function skyscraper.progress.start_building_floor(pos, segmentindex, floorindex)
   minetest.register_globalstep(function(dtime)
     local v, message =pcall(function()
@@ -92,6 +144,11 @@ function skyscraper.progress.start_building_floor(pos, segmentindex, floorindex)
           if floorprog.current_stage > count(floordef.stages) then
             if not floorprog.completed then
               floorprog.completed = true
+              
+              --raise completed callback
+              if type(floordef.completed) == "function" then
+                floordef.completed(skyscraperprog, segmentprog, floorprog, stagedef.name)
+              end
             end
           --otherwise, current_stage is probably at 0 and needs to move up 1 so stagedef will not be nil on the next global step
           else
@@ -103,6 +160,22 @@ function skyscraper.progress.start_building_floor(pos, segmentindex, floorindex)
           if floorprog.current_stage_elapsed > stagedef.steps then
             floorprog.current_stage_elapsed = 0
             skyscraper.progress.build_stage(pos, segmentindex, floorindex)
+            
+            --the floor is built but not completed
+            floorprog.built = true
+            
+            --raise some callbacks
+            --if it is the first stage then it has just been built
+            if floorprog.current_stage == 1 then
+              if type(floorprog.current_stage) == "function" then
+                floordef.built(skyscraperprog, segmentprog, floorprog, stagedef.name)
+              end
+            end
+            --also raise the stage_changed callback
+            if type(floordef.stage_changed) == "function" then
+              floordef.stage_changed(skyscraperprog, segmentprog, floorprog, stagedef.name)
+            end
+            
             --increment current_stage so the next global step will get the next stage definition
             floorprog.current_stage = floorprog.current_stage + 1
           end
@@ -147,14 +220,26 @@ function skyscraper.progress.start_building_skyscraper(pos)
         local skyscraperdef = skyscraper.registered_skyscrapers[(skyscraperprog or {name="_"}).name]
         local segmentdef = skyscraper.registered_segments[(segmentprog or {name="_"}).name]
         local floordef = skyscraper.registered_floors[(floorprog or {name="_"}).name]
+        
+        if not skyscraperprog.started then
+          skyscraperprog.started = true
+          --do skyscraperdef.started callback
+          if type(skyscraperdef.started) == "function" then
+            skyscraperdef.started(skyscraperprog)
+          end
+        end
       
         if segmentprog == nil then
           --if the current segment is higher than the maximum amount of segments then complete the skyscraper
           --if not, continue to up the current segment
           if skyscraperprog.current_segment > count(skyscraperdef.segments, false) then
-            if not skyscraperprog.completed then
-              --complete the skyscraper if it is not completed
-              skyscraperprog.completed = true
+            --this means the skyscraper has finished stacking
+            if not skyscraperdef.built then
+              --raise the built callback
+              skyscraperprog.built = true
+              if type(skyscraperdef.built) == "function" then
+                skyscraperdef.built(skyscraperprog)
+              end
             end
           else
             skyscraperprog.current_segment = skyscraperprog.current_segment + 1
@@ -164,12 +249,26 @@ function skyscraper.progress.start_building_skyscraper(pos)
             --if the current floor is greater than the amount of floors defined by the type of segement then complete the segment
             --if not, continue to up the current floor
             if segmentprog.current_floor > segmentdef.floors then
-              if not segmentprog.completed then
+              if not segmentprog.built then
+                --this means that the segment has finished stacking
                 --next segment
                 skyscraperprog.current_segment = skyscraperprog.current_segment + 1
-                segmentprog.completed = true
+                
+                if not segmentprog.built then
+                  segmentprog.built = true
+                  --raise the built callback
+                  if type(segmentdef.built) == "function" then
+                    segmentdef.built(skyscraperdef, segmentdef)
+                  end
+                end
               end
             else
+              if segmentprog.current_floor == 1 then
+                if type(segmentdef.started) == "function" then
+                  segmentdef.started(skyscraperprog, segmentprog)
+                end
+              end
+              
               segmentprog.current_floor = segmentprog.current_floor + 1
             end
           else
@@ -182,6 +281,10 @@ function skyscraper.progress.start_building_skyscraper(pos)
             end
           end
         end
+        
+        --update completion statuses
+        update_completion_status(skyscraperprog, segmentprog)
+        
         --elapse time for whatever is not nil. this makes other code clean and readable
         elapse(dtime, skyscraperprog, segmentprog, floorprog)
       end
@@ -191,4 +294,8 @@ function skyscraper.progress.start_building_skyscraper(pos)
       minetest.log(message)
     end
   end)
+end
+
+function skyscraper.start_building_skyscraper(pos)
+  skyscraper.progress.start_building_skyscraper(pos)
 end
