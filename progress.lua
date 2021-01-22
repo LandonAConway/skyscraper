@@ -190,7 +190,7 @@ function skyscraper.progress.start_building_floor(pos, segmentindex, floorindex)
               --raise some callbacks
               --if it is the first stage then it has just been built
               if floorprog.current_stage == 1 then
-                if type(floorprog.current_stage) == "function" then
+                if type(floordef.built) == "function" then
                   floordef.built(skyscraperprog, segmentprog, floorprog, stagedef.name)
                 end
               end
