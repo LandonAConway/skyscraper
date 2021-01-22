@@ -341,8 +341,8 @@ IV. Callbacks
 			Examples:
 			
 				before_stage_changed = function(skyscraperprog, segmentprog, floorprog, stage_name)
-					--change position if stage_name is equel to "stage4"
-					if stage_name == "stage4" then
+					--change position if stage_name is equel to "skyscraper:stage4"
+					if stage_name == "skyscraper:stage4" then
 						local position = floorprog.actual_position
 						position = {x=position.x-1, y=position.y, z=position.z-1}
 						return position
