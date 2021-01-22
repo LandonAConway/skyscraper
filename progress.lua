@@ -174,6 +174,14 @@ function skyscraper.progress.start_building_floor(pos, segmentindex, floorindex)
             --build the stage if it is time to do so
             if floorprog.current_stage_elapsed > stagedef.steps then
               floorprog.current_stage_elapsed = 0
+              
+              --raise the before_stage_changed callback
+              --change floorprog.actual_position. floorprog.original_position will not be changed
+              if type(floordef.before_stage_changed) == "function" then
+                local position = floorprog.before_stage_changed(skyscraperprog, segmentprog, floorprog, stagedef.name)
+                floorprog.actual_position = position or floorprog.actual_position
+              end
+              
               skyscraper.progress.build_stage(pos, segmentindex, floorindex)
               
               --the floor is built but not completed
@@ -186,9 +194,9 @@ function skyscraper.progress.start_building_floor(pos, segmentindex, floorindex)
                   floordef.built(skyscraperprog, segmentprog, floorprog, stagedef.name)
                 end
               end
-              --also raise the stage_changed callback
-              if type(floordef.stage_changed) == "function" then
-                floordef.stage_changed(skyscraperprog, segmentprog, floorprog, stagedef.name)
+              --raise the after_stage_changed callback
+              if type(floordef.after_stage_changed) == "function" then
+                floordef.after_stage_changed(skyscraperprog, segmentprog, floorprog, stagedef.name)
               end
               
               --increment current_stage so the next global step will get the next stage definition

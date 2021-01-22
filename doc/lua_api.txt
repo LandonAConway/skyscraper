@@ -1,0 +1,505 @@
+--This document is the API documention of the Minetest Skyscraper mod
+
+Table of contents
+---------------------------------------------------------------------------
+I. Global Functions
+II. Global Tables
+	A. Registeration Tables
+	B. Progress Tables
+III. Definitions
+	A. Registeration Definitions
+	B. Progress Definitions
+IV. Callbacks
+V. Registeration Functions
+---------------------------------------------------------------------------
+
+I. Global Functions
+
+--Initializes a skyscraper. This function must happen before starting the building process.
+skyscraper.initialize_skyscraper(pos, skyscrapername, rotation, player)
+	
+	Arguments:
+		-- pos -> The position to place the skyscraper at. (i.e. {x=0,y=0,z=0})
+		-- skyscrapername -> The name of the registered skyscraper (i.e. "modname:skyscrapername")
+		-- rotation -> The rotation of the skyscraper. This can either be 0, 90, 180, or 270. Must be a number.
+		-- player -> The playerref of the player who is placing the skyscraper. This is optional.
+		
+	Return Variables:
+		-- <skyscraperprog> -> Returns a table containing information about the skyscraper progress.
+		
+	Examples:
+		
+		local skyscraperprog = skyscraper.initialize_skyscraper({x=0,y=0,z=0}, "skyscraper:sample", 0)
+
+
+--Starts the building process of a skyscraper.
+skyscraper.start_building_skyscraper(pos)
+	
+	Arguments:
+		-- pos -> The position of an initialized skyscraper. (i.e. {x=0,y=0,z=0})
+	
+	Examples:
+	
+		skyscraper.start_building_skyscraper({x=0,y=0,z=0})
+		
+
+II. Global Tables
+
+	A. Registeration Tables
+	--Tables which contain registered skyscrapers and skyscraper parts
+	
+		--A map of all registered stages keyed by their names
+		skyscraper.registered_stages
+		
+		--A map of all registered floors keyed by their names
+		skyscraper.registered_floors
+		
+		--A map of all registered segments keyed by their names
+		skyscraper.registered_segments
+		
+		--A map of all registered skyscrapers keyed by their names
+		skyscraper.registered_skyscrapers
+
+	B. Progress Tables
+	--Tables which contain information about the current progress of a skyscraper and it't other parts
+	--Without these tables, the progression of a skyscraper would not be possible
+	--All comonents inside each table are keyed by the position, converted to a string using 'minetest.pos_to_string',
+	--which a skyscraper is placed at.
+	
+		--A map of collections of floor progress definition tables
+		skyscraper.progress.floors
+			
+			Usage:
+				local floors = skyscraper.progress.floors[minetest.pos_to_string(pos_of_skyscraper)]
+				--gets the progress definition of a specific floor
+				local floor_eight = floors[8]
+				
+		--A map of collections of segment progress definition tables
+		skyscraper.progress.segments
+			
+			Usage:
+				local segments = skyscraper.progress.floors[minetest.pos_to_string(pos_of_skyscraper)]
+				--gets the progress definition of a specific segment
+				local segment_two = segments[2]
+				
+		--A map of skyscraper progress definition tables
+		skyscraper.progress.skycrapers
+			
+			Usage:
+				--gets the skyscraper progress definition of the skyscraper located at 'pos_of_skyscraper' position table
+				local skyscraper = skyscraper.progress.floors[minetest.pos_to_string(pos_of_skyscraper)]
+
+
+III. Definitions
+
+	A. Registeration Definitions
+	--Fields starting with '**' are required.
+	
+		-- stage definition.
+		-- Used by: skyscraper.register_stage()
+			
+			Fields:
+				
+				-- ** 'schematic' <table> -> The schematic that will be placed. Must be a schematic table.
+				
+				-- ** 'steps' <number> -> The amount of time that it takes for the stage to be built.
+				
+				-- 'before_placement' <function> -> A function that gets called before a schematic is placed.
+				
+				-- 'after_placement' <function> -> A function that gets called after a schematic is placed.
+		
+		
+		
+		--floor definition.
+		--Used by: skyscraper.register_floor()
+		
+			Fields:
+				
+				-- ** 'stages' <table> -> A table of string names of stages.
+				-- Each stage is placed after another.
+				
+				-- ** 'steps' <number> -> The amount of time it takes for the floor to be built.
+				
+				-- 'offset' <position table> -> An offset of where the floor should be placed, after it's segment's, and skyscraper's position.
+				
+				-- 'container' <size table> -> Highly recomended, this is a reference to the xyz size of the floor.
+				
+				-- 'built' <function> -> A function that is called when the floor's first stage has been built.
+				
+				-- 'before_stage_changed' <function> -> A function that is called before a stage is built.
+				
+				-- 'after_stage_changed' <function> -> A function that is called after a stage is built.
+				
+				-- 'completed' <function> -> A function that is called when a floor has been completed.
+				
+		
+		
+		--segment definition
+		--Used by: skyscraper.register_segment()
+			
+			Fields:
+				
+				-- ** 'floor' <string> -> The name of the floor that will be stacked.
+				
+				-- ** 'floors' <number> -> The amount of floors that will be stacked.
+				
+				-- ** 'floor_height' <number> -> The height of each floor is based off of this field, not the height of a schematic.
+				
+				-- 'offset' <pos table> -> An offset of where the segment should be placed, after the skyscraper's position.
+				
+				-- 'container' <size table> -> Highly recomended, this is a reference to the xyz size of the segment.
+				
+				-- 'started' <function> -> A function that is called when the segment's first floor has been built.
+				
+				-- 'built' <function> -> A function that is called when the segment's last floor has been built.
+				
+				-- 'completed' <function> -> A function that is called when the segment's last floor has been completed.
+				
+		
+		
+		--skyscraper definition
+		--Used by: skyscraper.register_skyscraper()
+		
+			Fields:
+				
+				-- ** 'segments' <table> -> A table of segment names.
+				
+				-- 'offset' <pos table> -> An offset of where the skyscraper should be placed.
+				
+				-- 'container' <size table> -> Highly reccomended, this is a reference to the xyz size of the skyscraper.
+				
+				-- 'initialized' <function> -> A function that is called when the skyscraper is initialized.
+				
+				-- 'started' <function> -> A function that is called when the skyscraper has started being built.
+				
+				-- 'built' <function> -> A function that is called when the skyscraper's last floor has been built.
+				
+				-- 'completed' <function> -> A function that is called when the skyscraper's last floor has been completed.
+			
+	
+	
+	B. Progress Definitions
+		--These definitions are created when initializing a skyscraper, and indicate it's progress.
+		--They can be used to get information about a skyscraper's progress usually in callbacks.
+		--They can also be accessed from global tables.
+		--DO NOT change any of these field's values unless you know what you are doing.
+		
+			--floor progress
+			--Commonly called 'floorprog'
+				
+				Fields:
+					
+					-- 'name' <string> -> indicates the name of the floor.
+					
+					-- 'index' <number> -> The floor's index of what floor it is.
+					
+					-- 'position' <pos table> -> The floor's position without any offset.
+					
+					-- 'actual_position' <pos table> -> The floor's actual position of where it will be placed.
+					
+					-- 'original_actual_position' <pos table> -> The floor's actual position is also saved here if 'actual_position' get changed.
+					
+					-- 'current_stage' <number> -> The index of the current stage that was last placed.
+					
+					-- 'current_stage_elapsed' <number> -> The amount of time that has elapsed since the last stage placement.
+					
+					-- 'built' <boolean> -> indicates if the floor's first stage has been placed.
+					
+					-- 'completed' <boolean> -> indicates if the floor's last stage has been placed.
+					
+			
+			
+			--segment progress
+			--Commonly called 'segmentprog'
+				
+				Fields:
+					
+					-- 'name' <string> -> Indicates the registered name of the segment.
+					
+					-- 'index' <number> -> The segment's index of what segment it is.
+					
+					-- 'position' <pos table> -> The segment's position without any offset.
+					
+					-- 'actual_position' <pos table> -> The segment's actual position of where it will be placed.
+					
+					-- 'current_floor' <number> -> The index of the last floor that was built.
+					
+					-- 'height' <number> -> The calculated height of the segment.
+					
+					-- 'elapsed' <number> -> The amount of time that has elapsed since the segment has started.
+					
+					-- 'built' <boolean> -> indicates if all the segment's floors have been built.
+					
+					-- 'completed' <boolean> -> indicates if all the segment's floors have been completed.
+					
+					-- 'floors' <table> -> a table of floor progress tables that are part of the segment.
+					
+			
+			
+			--skyscraper progress
+			--Commonly called 'skyscraperprog'
+				
+				Fields:
+					
+					-- 'name' <string> -> Indicates the registered name of the skyscraper.
+					
+					-- 'position' <pos table> -> The skyscraper's position wihtout any offset.
+					
+					-- 'actual_position' <pos table> -> The skyscraper's actual position of where it will be placed.
+					
+					-- 'angle' <number> -> The angle of the skyscraper.
+					
+					-- 'current_segment' <number> -> The index of the current segment that is being built.
+					
+					-- 'height' <number> -> The calculated height of the skyscraper.
+					
+					-- 'elapsed' <number> -> The amount of time that has elapsed since the skyscraper has started.
+					
+					-- 'paused' <boolean> -> Indicates if the skyscraper has been paused or not.
+					
+					-- 'built' <boolean> -> Indicates if all the skyscraper's segments have been built.
+					
+					-- 'completed' <boolean> -> Indicates if all the skyscraper's segments have been completed.
+					
+		
+
+
+IV. Callbacks
+
+	A. Stage
+	
+		-- before_placement = function(skyscraperprog, segmentprog, floorprog) -> Gets called before a schematic is placed.
+		
+			Parameters:
+				-- skyscraperprog -> The skyscraper progress table of the skycraper being built.
+				-- segmentprog -> The segment progress table of the segment being built.
+				-- floorprog -> The floor progress table of the floor being built.
+				
+			Returnable Variables:
+			
+				-- <schematic> -> A schematic table in Lua format.
+				-- <position> -> An x,y,z position table. The schematic will be placed at this position instead.
+				--This does NOT overwrite the floor's 'actual_position'
+				
+			Examples:
+				
+				before_placement = function(skyscraperprog, segmentprog, floorprog)
+					local floordef = skyscraper.registered_floors[floorprog.name]
+					local schematic = skyscraper.registered_stages[floordef.stages[floorprog.current_stage]].schematic
+					
+					--change schematics dirt nodes to stone nodes if the current floor is 8
+					if segmentprog.current_floor == 8 then
+						for i, v in ipairs(schematic.data)
+							string.gsub(v.name, "default:dirt", "default:stone")
+						end
+					end
+					
+					--change position
+					local position = floorprog.actual_position
+					position = {x=position.x-1, y=position.y, z=position.z-1}
+					
+					return schematic, position
+				end
+				
+				
+				
+		-- after_placement(skyscraperprog, segmentprog, floorprog) -> gets called after a schematic is placed.
+		
+			Parameters:
+				-- skyscraperprog -> The skyscraper progress table of the skycraper being built.
+				-- segmentprog -> The segment progress table of the segment being built.
+				-- floorprog -> The floor progress table of the floor being built.
+	
+	
+	B. Floor
+		
+		--built = function(skyscraperprog, segmentprog, floorprog) -> Gets called when the first stage is built.
+		
+			Parameters:
+			
+				-- skyscraperprog -> The skyscraper progress table of the skycraper being built.
+				-- segmentprog -> The segment progress table of the segment being built.
+				-- floorprog -> The floor progress table of the floor being built.
+		
+		
+		
+		--before_stage_changed = function(skyscraperprog, segmentprog, floorprog, stage_name) -> Gets called before a floor's stage changes.
+		
+			Parameters:
+			
+				-- skyscraperprog -> The skyscraper progress table of the skycraper being built.
+				-- segmentprog -> The segment progress table of the segment being built.
+				-- floorprog -> The floor progress table of the floor being built.
+				-- stage_name -> The name of the next stage.
+				
+			Returnable Variables:
+			
+				-- <position> -> An x,y,z position table. The floor's schematic will be placed at this position instead.
+				--WARNING: This overwrites the floor's 'actual_position' value. However if you need a reference
+				--to the old position afterwards, use the floor's 'original_actual_position' value.
+				
+			Examples:
+			
+				before_stage_changed = function(skyscraperprog, segmentprog, floorprog, stage_name)
+					--change position if stage_name is equel to "stage4"
+					if stage_name == "stage4" then
+						local position = floorprog.actual_position
+						position = {x=position.x-1, y=position.y, z=position.z-1}
+						return position
+					end
+				end
+			
+			
+			
+		--after_stage_changed = function(skyscraperprog, segmentprog, floorprog, stage_name) -> Gets called after a floor's stage changes.
+		
+			Parameters:
+			
+				-- skyscraperprog -> The skyscraper progress table of the skycraper being built.
+				-- segmentprog -> The segment progress table of the segment being built.
+				-- floorprog -> The floor progress table of the floor being built.
+				-- stage_name -> The name of the stage that was changed to.
+		
+		
+		
+		--completed = function(skyscraperprog, segmentprog, floorprog) -> Gets called when a floor has completely been built.
+		
+			Parameters:
+				-- skyscraperprog -> The skyscraper progress table of the skycraper being built.
+				-- segmentprog -> The segment progress table of the segment being built.
+				-- floorprog -> The floor progress table of the floor being built.
+	
+	
+	C. Segment
+		
+		--started = function(skyscraperprog, segmentprog) -> Gets called when the first floor is built.
+		
+			Parameters:
+				-- skyscraperprog -> The skyscraper progress table of the skycraper being built.
+				-- segmentprog -> The segment progress table of the segment being built.
+		
+		
+		
+		--built = function(skyscraperprog, segmentprog) -> Gets called when all the floors are built.
+		
+			Parameters:
+				-- skyscraperprog -> The skyscraper progress table of the skycraper being built.
+				-- segmentprog -> The segment progress table of the segment being built.
+		
+		
+		
+		--completed = function(skyscraperprog, segmentprog) -> Gets called all the floors are completed.
+		
+			Parameters:
+				-- skyscraperprog -> The skyscraper progress table of the skycraper being built.
+				-- segmentprog -> The segment progress table of the segment being built.
+	
+	
+	
+	D. Skyscraper
+		
+		--initialized = function(skyscraperprog) -> Gets called when the skyscraper is initailized.
+		
+			Parameters:
+				-- skyscraperprog -> The skyscraper progress table of the skycraper being built.
+				-- player -> The playerref of the player that initialized the skyscraper - if there is one.
+		
+		
+		
+		--started = function(skyscraperprog) -> Gets called when the first floor is built.
+		
+			Parameters:
+				-- skyscraperprog -> The skyscraper progress table of the skycraper being built.
+		
+		
+		
+		--built = function(skyscraperprog) -> Gets called when all the floors are built.
+		
+			Parameters:
+				-- skyscraperprog -> The skyscraper progress table of the skycraper being built.
+		
+		
+		
+		--completed = function(skyscraperprog) -> Gets called all the floors are completed.
+		
+			Parameters:
+				-- skyscraperprog -> The skyscraper progress table of the skycraper being built.
+
+
+
+
+V. Registration Functions
+
+--While registering a skyscraper you need to define a table of segments which each specifies a type of floor,
+--which contains stages.
+
+--Registers a stage
+skyscraper.register_stage(name, definition)
+	
+	Arguments:
+		-- name -> The name of the stage. (i.e. "skyscraper:stage1")
+		-- definition -> The definition table of the stage. Go to 'Definitions' for the definition format.
+		
+	Examples:
+		
+		skyscraper.register_stage("skyscraper:stage1", {
+			schematic = {
+				--This should be in the format of a Minetest Lua schematic.
+			},
+		})
+		
+
+--Registers a floor
+skyscraper.register_floor(name, definition)
+
+	Arguments:
+		-- name -> The name of the floor. (i.e. "skyscraper:floor1")
+		-- definition -> The definition table of the floor. Go to 'Definitions' for the definition format.
+		
+	Examples:
+		
+		skyscraper.register_floor("skyscraper:floor1", {
+			stages = {
+				"skyscraper:stage1",
+				"skyscraper:stage2",
+				"skyscraper:stage3
+			},
+			
+			container = {x=20,y=4,z=30}
+		})
+
+
+--Registers a segment
+skyscraper.register_segment(name, definition)
+	
+	Arguments:
+		-- name -> The name of the segment. (i.e. "skyscraper:segment1")
+		-- definition -> The definition table of the segment. Go to 'Definitions' for the definition format.
+		
+	Examples:
+		
+		skyscraper.register_segment("skyscraper:segment1", {
+			floor = "skyscraper:floor1",
+			floors = 40,
+			floor_height = 4,
+			container = {x=20,y=4,z=30}
+		})
+		
+	
+--Registers a skyscraper
+skyscraper.register_skyscraper(name, definition)
+	
+	Arguments:
+		-- name -> The name of the skyscraper. (i.e. "skyscraper:skyscraper1")
+		-- definition -> The definition table of the segment. Go to 'Definitions' for the definition format.
+		
+	Examples:
+		
+		skyscraper.register_skyscraper("skyscraper:skyscraper1", {
+			description = "My Skyscraper",
+			segments = {
+				"skyscraper:segment1",
+				"skyscraper:segment2"
+			}
+			container = {x=20,y=4,z=30}
+		})

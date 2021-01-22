@@ -67,6 +67,7 @@ function skyscraper.progress.create_floor(pos, skyscraperdef, segmentdef, segmen
     index = floorindex,
     position = {x=pos.x, y=floor_y, z=pos.z},
     actual_position = {x=pos.x + offset.x, y=floor_y + offset.y, z=pos.z + offset.z},
+    original_actual_position = {x=pos.x + offset.x, y=floor_y + offset.y, z=pos.z + offset.z},
     current_stage = 0,
     elapsed = 0,
     current_stage_elapsed = 0,

@@ -34,3 +34,35 @@ minetest.register_chatcommand("delete_skyscraper", {
     end
   end,
 })
+
+minetest.register_chatcommand("skyscraper_toggle", {
+  params = "<pos>",
+  description = "Pauses or resumes construction of a skyscraper.",
+  privs = { skyscraper_admin = true },
+  func = function(name, param)
+    local pos
+    pcall(function() 
+      pos = minetest.string_to_pos(param)
+    end)
+    
+    if pos then
+      local skyscraperprog = skyscraper.progress.skyscrapers[minetest.pos_to_string(pos)]
+      
+      if skyscraperprog then
+        local state
+        if skyscraperprog.paused then
+          state = "Resumed"
+          skyscraperprog.paused = false
+        else
+          state = "Paused"
+          skyscraperprog.paused = true
+        end
+        
+        return true, "Skyscraper has been "..state.." at: "..minetest.pos_to_string(pos)
+      end
+      return false, "A skyscraper does not exist at this position."
+    else
+      return false, "Position is invalid."
+    end
+  end,
+})
