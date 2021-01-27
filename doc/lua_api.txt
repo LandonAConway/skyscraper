@@ -104,6 +104,10 @@ III. Definitions
 				
 				-- ** 'steps' <number> -> The amount of time that it takes for the stage to be built.
 				
+				-- 'offset' <position table> -> An offset of where the stage should be placed.
+				
+				-- 'container' <size table> -> Highly recomended, this is a reference to the xyz size of the stage.
+				
 				-- 'before_placement' <function> -> A function that gets called before a schematic is placed.
 				
 				-- 'after_placement' <function> -> A function that gets called after a schematic is placed.

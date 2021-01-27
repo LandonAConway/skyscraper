@@ -74,7 +74,17 @@ function skyscraper.progress.build_stage(pos, segmentindex, floorindex)
     end
     --use the schematic returned if there is one, if not use the default.
     local schematic = _schematic or stagedef.schematic
-    local position = _position or floorprog.actual_position
+    
+    --create a position with the stagedef.offset. This will be overwritten with the returned position
+    --if there is one
+    local actual_position = {
+      x = floorprog.actual_position.x + stagedef.offset.x,
+      y = floorprog.actual_position.y + stagedef.offset.y,
+      z = floorprog.actual_position.z + stagedef.offset.z
+    }
+    
+    --use the position returned if there is one, if not use the default
+    local position = _position or actual_position
     
     --place the schematic using the data provided.
     minetest.place_schematic(position, schematic, rotation, nil, true)
